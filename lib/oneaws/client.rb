@@ -31,21 +31,23 @@ module Oneaws
       end
 
       mfa = response.mfa
-      mfa_device = select_mfa_device(mfa)
-      
-      device_types_that_do_not_require_token = [
-        "OneLogin Protect"
-      ]
+      if mfa
+        mfa_device = select_mfa_device(mfa)
+        
+        device_types_that_do_not_require_token = [
+          "OneLogin Protect"
+        ]
 
-      otp_token = unless device_types_that_do_not_require_token.include?(mfa_device.type)
-        print "input OTP of #{mfa_device.type}: "
-        STDIN.noecho(&:gets)
-      end
+        otp_token = unless device_types_that_do_not_require_token.include?(mfa_device.type)
+          print "input OTP of #{mfa_device.type}: "
+          STDIN.noecho(&:gets)
+        end
 
-      response = @onelogin.get_saml_assertion_verifying(app_id, mfa_device.id, mfa.state_token, otp_token, nil, false)
-      
-      if response.nil?
-        raise SamlRequestError.new("#{@onelogin.error} #{@onelogin.error_description}")
+        response = @onelogin.get_saml_assertion_verifying(app_id, mfa_device.id, mfa.state_token, otp_token, nil, false)
+        
+        if response.nil?
+          raise SamlRequestError.new("#{@onelogin.error} #{@onelogin.error_description}")
+        end
       end
 
       while response.type != "success" do
